@@ -24,4 +24,5 @@ export interface SpinPickerProps<T> extends ExternalArrowButtonProps {
     onInputValueChanged?: (value: string, previousValue: string) => string
     textInputProps?: TextInputProps
     textInputStyle?: TextStyle
+    hideMask?: boolean
 }

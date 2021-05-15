@@ -75,61 +75,73 @@ export class SpinPicker<T> extends React.Component<SpinPickerProps<T>, SpinPicke
             item: item
         }));
 
-        this.data.push(...this.props.data.map(item => ({
-            index: '2-' + this.props.keyExtractor(item),
-            item: item
-        })));
+        this.data.push(
+            ...this.props.data.map(item => ({
+                index: '2-' + this.props.keyExtractor(item),
+                item: item
+            }))
+        );
     }
 
     render() {
         const {height, showArrows, selectedIndex, isTyping, textInputProps, textInputStyle} = {...this.state, ...this.props};
         const list = (
             <View style={{height: height * this.showLength}}>
+                <FlatList
+                    data={this.data}
+                    renderItem={this.getRenderItem}
+                    ref={ref => (this.listRef = ref)}
+                    showsVerticalScrollIndicator={false}
+                    onScrollToIndexFailed={NOOP}
+                    onScroll={this.onScroll}
+                    initialScrollIndex={selectedIndex}
+                    getItemLayout={(data, index) => ({length: height, offset: height * index, index})}
+                    keyExtractor={item => item.index}
+                    onMomentumScrollBegin={this.onMomentumScrollBegin}
+                    onMomentumScrollEnd={this.onMomentumScrollEnd}
+                    onScrollBeginDrag={this.onDragScrollBegin}
+                    onScrollEndDrag={this.onDragScrollEnd}
+                    style={{flexGrow: 0}}
+                />
 
-                <FlatList data={this.data}
-                          renderItem={this.getRenderItem}
-                          ref={ref => this.listRef = ref}
-                          showsVerticalScrollIndicator={false}
-                          onScrollToIndexFailed={NOOP}
-                          onScroll={this.onScroll}
-                          initialScrollIndex={selectedIndex}
-                          getItemLayout={(data, index) => ({length: height, offset: height * index, index})}
-                          keyExtractor={(item) => item.index}
-                          onMomentumScrollBegin={this.onMomentumScrollBegin}
-                          onMomentumScrollEnd={this.onMomentumScrollEnd}
-                          onScrollBeginDrag={this.onDragScrollBegin}
-                          onScrollEndDrag={this.onDragScrollEnd}
-                          style={{flexGrow: 0}}/>
+                <FloatingInput
+                    height={height}
+                    visible={isTyping}
+                    style={textInputStyle}
+                    onSubmitEditing={() => this.setState({isTyping: false})}
+                    value={this.state.inputValue}
+                    onChangeText={this.onInputValueChanged}
+                    {...textInputProps}
+                />
 
-                <FloatingInput height={height}
-                               visible={isTyping}
-                               style={textInputStyle}
-                               onSubmitEditing={() => this.setState({isTyping: false})}
-                               value={this.state.inputValue}
-                               onChangeText={this.onInputValueChanged}
-                               {...textInputProps}/>
-
-                <Mask height={height} isTop/>
-                <Mask height={height}/>
-
+                {!this.props.hideMask && (
+                    <>
+                        <Mask height={height} isTop />
+                        <Mask height={height} />
+                    </>
+                )}
             </View>
         );
 
         if (showArrows) {
             return (
                 <View>
-                    <ArrowButton height={height}
-                                 onPress={this.onDecrementIndex}
-                                 onLongPress={this.onStartDecrementScroll}
-                                 onLift={this.onEndScroll}
-                                 {...this.props}/>
+                    <ArrowButton
+                        height={height}
+                        onPress={this.onDecrementIndex}
+                        onLongPress={this.onStartDecrementScroll}
+                        onLift={this.onEndScroll}
+                        {...this.props}
+                    />
                     {list}
-                    <ArrowButton isPointingDown
-                                 height={height}
-                                 onPress={this.onIncrementIndex}
-                                 onLongPress={this.onStartIncrementScroll}
-                                 onLift={this.onEndScroll}
-                                 {...this.props}/>
+                    <ArrowButton
+                        isPointingDown
+                        height={height}
+                        onPress={this.onIncrementIndex}
+                        onLongPress={this.onStartIncrementScroll}
+                        onLift={this.onEndScroll}
+                        {...this.props}
+                    />
                 </View>
             );
         }
@@ -142,7 +154,7 @@ export class SpinPicker<T> extends React.Component<SpinPickerProps<T>, SpinPicke
 
         if (this.state.height != height) {
             if (this.state.height != 0) {
-                console.warn("Dynamic heights are not supported, if you are experiencing issues set a fixed height in renderItem");
+                console.warn('Dynamic heights are not supported, if you are experiencing issues set a fixed height in renderItem');
             }
             this.setState({height: height});
         }
@@ -150,8 +162,7 @@ export class SpinPicker<T> extends React.Component<SpinPickerProps<T>, SpinPicke
 
     private getRenderItem: ListRenderItem<SpinPickerItem<T>> = info => {
         return (
-            <TouchableOpacity onLayout={this.onListItemLayout}
-                              onPress={() => this.onListItemClick(info)}>
+            <TouchableOpacity onLayout={this.onListItemLayout} onPress={() => this.onListItemClick(info)}>
                 {this.props.renderItem(info.item.item, info.index)}
             </TouchableOpacity>
         );
@@ -171,8 +182,8 @@ export class SpinPicker<T> extends React.Component<SpinPickerProps<T>, SpinPicke
         }
     }
 
-    private onStartIncrementScroll = () => this.manualScrollTimer = setInterval(this.onIncrementIndex, this.scrollInterval);
-    private onStartDecrementScroll = () => this.manualScrollTimer = setInterval(this.onDecrementIndex, this.scrollInterval);
+    private onStartIncrementScroll = () => (this.manualScrollTimer = setInterval(this.onIncrementIndex, this.scrollInterval));
+    private onStartDecrementScroll = () => (this.manualScrollTimer = setInterval(this.onDecrementIndex, this.scrollInterval));
 
     private onEndScroll = () => clearInterval(this.manualScrollTimer);
 
@@ -211,7 +222,7 @@ export class SpinPicker<T> extends React.Component<SpinPickerProps<T>, SpinPicke
 
         if (y < this.scrollThreshold) {
             this.listRef.scrollToOffset({offset: this.dataLength * this.state.height + y});
-        } else if (y > ((this.dataLength * 2 - this.showLength) * this.state.height) - this.scrollThreshold) {
+        } else if (y > (this.dataLength * 2 - this.showLength) * this.state.height - this.scrollThreshold) {
             this.listRef.scrollToOffset({offset: (this.dataLength - this.showLength) * this.state.height});
         }
     };
@@ -241,14 +252,11 @@ export class SpinPicker<T> extends React.Component<SpinPickerProps<T>, SpinPicke
         event.persist();
         this.isDragScrolling = false;
         this.autoScrollTimer && clearTimeout(this.autoScrollTimer);
-        this.autoScrollTimer = setTimeout(
-            () => {
-                if (!this.isMomentumScrolling && !this.isDragScrolling) {
-                    this.scrollToNearestElement(event.nativeEvent.contentOffset.y);
-                }
-            },
-            10
-        );
+        this.autoScrollTimer = setTimeout(() => {
+            if (!this.isMomentumScrolling && !this.isDragScrolling) {
+                this.scrollToNearestElement(event.nativeEvent.contentOffset.y);
+            }
+        }, 10);
     };
 
     onMomentumScrollBegin = () => {
